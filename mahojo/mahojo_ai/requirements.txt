@@ -17,7 +17,7 @@ icrawler==0.6.10
 idna==3.13
 itsdangerous==2.2.0
 Jinja2==3.1.6
-keras==3.14.0
+keras==3.12.1
 libclang==18.1.1
 lxml==6.1.0
 markdown-it-py==4.0.0
@@ -25,7 +25,7 @@ MarkupSafe==3.0.3
 mdurl==0.1.2
 ml_dtypes==0.5.4
 namex==0.1.0
-numpy==2.4.4
+numpy==1.26.4
 opt_einsum==3.4.0
 optree==0.19.0
 packaging==26.1
@@ -38,7 +38,7 @@ rich==15.0.0
 setuptools==82.0.1
 six==1.17.0
 soupsieve==2.8.3
-tensorflow==2.21.0
+tensorflow==2.15.0
 termcolor==3.3.0
 typing_extensions==4.15.0
 urllib3==2.6.3

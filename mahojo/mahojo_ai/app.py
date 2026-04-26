@@ -7,6 +7,11 @@ import tensorflow as tf
 
 app = Flask(__name__)
 
+print("=== FILE TREE ===")
+for root, dirs, files in os.walk("."):
+    print(root)
+    for f in files:
+        print(" -", f)
 # =========================
 # パス設定
 # =========================

@@ -7,29 +7,26 @@ import traceback
 
 app = Flask(__name__)
 
-# =========================
-# モデルロード（安全）
-# =========================
+MODEL_PATH = "model/mahjong_model.h5"
 model = None
 
+# ===== モデル安全ロード =====
 def load_model_safe():
     global model
     try:
         model = tf.keras.models.load_model(
-            "model/mahjong_model.h5",
+            MODEL_PATH,
             compile=False
         )
-        print("✅ MODEL LOAD SUCCESS")
+        print("MODEL LOADED SUCCESS")
     except Exception as e:
-        print("❌ MODEL LOAD ERROR")
-        print(traceback.format_exc())
+        print("MODEL LOAD ERROR:", e)
+        traceback.print_exc()
         model = None
 
 load_model_safe()
 
-# =========================
-# ラベル
-# =========================
+# ===== ラベル =====
 categories = [
     "1m","2m","3m","4m","5m","6m","7m","8m","9m",
     "1p","2p","3p","4p","5p","6p","7p","8p","9p",
@@ -38,74 +35,46 @@ categories = [
     "white","green","red"
 ]
 
-# =========================
-# ヘルスチェック
-# =========================
+# ===== ヘルスチェック =====
 @app.route("/")
 def home():
     return jsonify({
-        "status": "OK",
+        "status": "API OK",
         "model_loaded": model is not None
     })
 
-# =========================
-# 予測API
-# =========================
+# ===== 予測 =====
 @app.route("/predict", methods=["POST"])
 def predict():
+
+    if model is None:
+        return jsonify({"error": "MODEL_NOT_LOADED"}), 500
+
+    if "image" not in request.files:
+        return jsonify({"error": "NO_IMAGE"}), 400
+
     try:
-        print("➡ REQUEST RECEIVED")
-
-        # 画像チェック
-        if "image" not in request.files:
-            return jsonify({
-                "error": "NO_IMAGE",
-                "detail": "imageキーが送られていない"
-            }), 400
-
         file = request.files["image"]
 
-        # 画像処理
         img = Image.open(file).convert("RGB").resize((150, 150))
         data = np.array(img, dtype=np.float32) / 255.0
         data = np.expand_dims(data, axis=0)
 
-        print("➡ IMAGE OK")
-
-        # モデルチェック
-        if model is None:
-            return jsonify({
-                "error": "MODEL_NOT_LOADED"
-            }), 500
-
-        # 推論
         pred = model.predict(data, verbose=0)
-
         idx = int(np.argmax(pred))
-        confidence = float(np.max(pred))
-
-        print("➡ PRED DONE:", idx)
 
         return jsonify({
             "result": categories[idx],
-            "confidence": confidence
+            "confidence": float(np.max(pred))
         })
 
     except Exception as e:
-        # 🔥 ここが最重要（エラー全部見える）
-        print("🔥 INTERNAL ERROR")
-        print(traceback.format_exc())
-
         return jsonify({
-            "error": "INTERNAL_ERROR",
-            "message": str(e),
-            "trace": traceback.format_exc()
+            "error": "INFERENCE_ERROR",
+            "detail": str(e)
         }), 500
 
 
-# =========================
-# Render起動
-# =========================
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)

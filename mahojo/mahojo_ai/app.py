@@ -8,32 +8,9 @@ import tensorflow as tf
 app = Flask(__name__)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-MODEL_PATH = os.path.join(BASE_DIR, "model", "mahjong_model.h5")
+MODEL_PATH = os.path.join(BASE_DIR, "model", "mahjong_model.keras")
 
 model = None
-
-def load_model_safe():
-    global model
-    try:
-        print("=== DEBUG START ===")
-        print("CWD:", os.getcwd())
-        print("FILES:", os.listdir("."))
-        print("MODEL PATH:", MODEL_PATH)
-        print("MODEL EXISTS:", os.path.exists(MODEL_PATH))
-        print("=== DEBUG END ===")
-
-        if not os.path.exists(MODEL_PATH):
-            raise FileNotFoundError("MODEL FILE NOT FOUND")
-
-        model = tf.keras.models.load_model(MODEL_PATH, compile=False)
-        print("MODEL LOADED OK")
-
-    except Exception as e:
-        print("MODEL LOAD FAILED:", e)
-        traceback.print_exc()
-        model = None
-
-load_model_safe()
 
 categories = [
     "1m","2m","3m","4m","5m","6m","7m","8m","9m",
@@ -43,6 +20,23 @@ categories = [
     "white","green","red"
 ]
 
+def load_model_safe():
+    global model
+    try:
+        print("MODEL PATH:", MODEL_PATH)
+        print("EXISTS:", os.path.exists(MODEL_PATH))
+
+        model = tf.keras.models.load_model(MODEL_PATH, compile=False)
+        print("MODEL LOADED OK")
+
+    except Exception as e:
+        print("MODEL LOAD ERROR:", e)
+        traceback.print_exc()
+        model = None
+
+load_model_safe()
+
+
 @app.route("/")
 def home():
     return jsonify({
@@ -50,8 +44,10 @@ def home():
         "model_loaded": model is not None
     })
 
+
 @app.route("/predict", methods=["POST"])
 def predict():
+
     if model is None:
         return jsonify({"error": "MODEL_NOT_LOADED"}), 500
 
@@ -61,7 +57,7 @@ def predict():
     try:
         file = request.files["image"]
 
-        img = Image.open(file).convert("RGB").resize((150, 150))
+        img = Image.open(file).convert("RGB").resize((150,150))
         data = np.array(img, dtype=np.float32) / 255.0
         data = np.expand_dims(data, axis=0)
 

@@ -1,6 +1,4 @@
 from keras import layers, models
-from keras.utils import to_categorical
-import numpy as np
 
 categories = [
     "1m","2m","3m","4m","5m","6m","7m","8m","9m",
@@ -38,15 +36,8 @@ def build_model():
     return model
 
 
+# 保存用（学習後に使う）
 if __name__ == "__main__":
     model = build_model()
-
-    # 仮データ（ここは自分のデータに置き換え）
-    X = np.random.random((100,150,150,3))
-    y = to_categorical(np.random.randint(0, len(categories), 100), num_classes=len(categories))
-
-    model.fit(X, y, epochs=3)
-
-    # ★重要：keras形式で保存
-    model.save("model/mahjong_model.keras")
-    print("saved model")
+    model.save("model/mahjong_model.h5")
+    print("MODEL SAVED")

@@ -8,13 +8,11 @@ import tensorflow as tf
 app = Flask(__name__)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-MODEL_PATH = os.path.join(BASE_DIR, "model", "mahjong_model.keras")
+MODEL_PATH = os.path.join(BASE_DIR, "model", "mahjong_model.h5")
 
-model = tf.keras.models.load_model(
-    "model/mahjong_model.keras",
-    compile=False
-)
+model = None
 
+# ===== ラベル =====
 categories = [
     "1m","2m","3m","4m","5m","6m","7m","8m","9m",
     "1p","2p","3p","4p","5p","6p","7p","8p","9p",
@@ -23,37 +21,48 @@ categories = [
     "white","green","red"
 ]
 
+# ===== モデルロード =====
 def load_model_safe():
     global model
+
     try:
+        print("=== MODEL DEBUG ===")
+        print("CWD:", os.getcwd())
         print("MODEL PATH:", MODEL_PATH)
         print("EXISTS:", os.path.exists(MODEL_PATH))
+        print("DIR:", os.listdir(os.path.dirname(MODEL_PATH)))
+        print("===================")
 
-        model = tf.keras.models.load_model(MODEL_PATH, compile=False)
-        print("MODEL LOADED OK")
+        if not os.path.exists(MODEL_PATH):
+            raise FileNotFoundError("MODEL FILE NOT FOUND")
+
+        model = tf.keras.models.load_model(
+            MODEL_PATH,
+            compile=False
+        )
+
+        print("MODEL LOADED SUCCESS")
 
     except Exception as e:
-        print("MODEL LOAD ERROR:", e)
+        print("MODEL LOAD FAILED:", e)
         traceback.print_exc()
         model = None
 
 load_model_safe()
 
 
+# ===== ヘルスチェック =====
 @app.route("/")
 def home():
     return jsonify({
-        "status": "OK",
+        "status": "API OK",
         "model_loaded": model is not None
     })
 
 
+# ===== 推論 =====
 @app.route("/predict", methods=["POST"])
 def predict():
-
-    print("=== REQUEST DEBUG ===")
-    print("FILES:", request.files)
-
 
     if model is None:
         return jsonify({"error": "MODEL_NOT_LOADED"}), 500
@@ -83,6 +92,7 @@ def predict():
         }), 500
 
 
+# ===== 起動 =====
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)

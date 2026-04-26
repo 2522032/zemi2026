@@ -15,9 +15,12 @@ model = None
 def load_model_safe():
     global model
     try:
-        print("BASE_DIR:", BASE_DIR)
-        print("MODEL_PATH:", MODEL_PATH)
-        print("EXISTS:", os.path.exists(MODEL_PATH))
+        print("=== DEBUG START ===")
+        print("CWD:", os.getcwd())
+        print("FILES:", os.listdir("."))
+        print("MODEL PATH:", MODEL_PATH)
+        print("MODEL EXISTS:", os.path.exists(MODEL_PATH))
+        print("=== DEBUG END ===")
 
         if not os.path.exists(MODEL_PATH):
             raise FileNotFoundError("MODEL FILE NOT FOUND")

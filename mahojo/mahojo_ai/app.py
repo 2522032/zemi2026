@@ -8,7 +8,10 @@ import tensorflow as tf
 app = Flask(__name__)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-MODEL_PATH = os.path.join(BASE_DIR, "model", "mahjong_model.h5")
+
+# ⭐ ここ重要：両対応にする（h5 / kerasどっちでもOKにする）
+MODEL_PATH_H5 = os.path.join(BASE_DIR, "model", "mahjong_model.h5")
+MODEL_PATH_KERAS = os.path.join(BASE_DIR, "model", "mahjong_model.keras")
 
 model = None
 
@@ -24,15 +27,21 @@ def load_model_safe():
     global model
 
     try:
-        print("MODEL PATH:", MODEL_PATH)
-        print("EXISTS:", os.path.exists(MODEL_PATH))
+        print("=== MODEL DEBUG ===")
+        print("BASE_DIR:", BASE_DIR)
+        print("H5 EXISTS:", os.path.exists(MODEL_PATH_H5))
+        print("KERAS EXISTS:", os.path.exists(MODEL_PATH_KERAS))
 
-        if not os.path.exists(MODEL_PATH):
-            raise FileNotFoundError("model not found")
+        path = None
+        if os.path.exists(MODEL_PATH_KERAS):
+            path = MODEL_PATH_KERAS
+        elif os.path.exists(MODEL_PATH_H5):
+            path = MODEL_PATH_H5
+        else:
+            raise FileNotFoundError("NO MODEL FILE FOUND")
 
-        model = tf.keras.models.load_model(MODEL_PATH, compile=False)
-
-        print("MODEL LOADED OK")
+        model = tf.keras.models.load_model(path, compile=False)
+        print("MODEL LOADED:", path)
 
     except Exception as e:
         print("MODEL LOAD FAILED:", e)
@@ -50,7 +59,6 @@ def home():
 
 @app.route("/predict", methods=["POST"])
 def predict():
-
     if model is None:
         return jsonify({"error": "MODEL_NOT_LOADED"}), 500
 
@@ -60,7 +68,7 @@ def predict():
     try:
         file = request.files["image"]
 
-        img = Image.open(file).convert("RGB").resize((150,150))
+        img = Image.open(file).convert("RGB").resize((150, 150))
         data = np.array(img, dtype=np.float32) / 255.0
         data = np.expand_dims(data, axis=0)
 

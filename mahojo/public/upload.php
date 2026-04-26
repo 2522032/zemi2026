@@ -10,7 +10,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_FILES["image"])) {
     $file_tmp = $_FILES["image"]["tmp_name"];
 
     // Flask API（正しい書き方）
-    $url = "https://mandarin-drainpipe-dreamily.ngrok-free.dev/predict";
+    $url = "https://zemi2026-1.onrender.com/predict";
 
     // ★これ必須
     $post_data = [

@@ -38,7 +38,5 @@ def build_model():
 
 if __name__ == "__main__":
     model = build_model()
-
-    # ⭐重要：h5で統一（Render安定）
-    model.save("model/mahjong_model.h5")
+    model.save("model/mahjong_model.keras")
     print("saved")

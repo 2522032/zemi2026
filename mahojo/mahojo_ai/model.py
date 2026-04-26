@@ -38,5 +38,8 @@ def build_model():
 
 if __name__ == "__main__":
     model = build_model()
-    model.save("model/mahjong_model.keras")
-    print("saved")
+
+    # ★重要：必ずh5
+    model.save("model/mahjong_model.h5")
+
+    print("MODEL SAVED (.h5)")

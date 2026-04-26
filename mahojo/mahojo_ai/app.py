@@ -7,16 +7,11 @@ import tensorflow as tf
 
 app = Flask(__name__)
 
-print("=== FILE TREE ===")
-for root, dirs, files in os.walk("."):
-    print(root)
-    for f in files:
-        print(" -", f)
 # =========================
-# パス設定
+# パス設定（.h5統一）
 # =========================
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-MODEL_PATH = os.path.join(BASE_DIR, "model", "mahjong_model.keras")
+MODEL_PATH = os.path.join(BASE_DIR, "model", "mahjong_model.h5")
 
 # =========================
 # ラベル
@@ -49,7 +44,7 @@ def load_model():
         model = tf.keras.models.load_model(MODEL_PATH, compile=False)
         print("MODEL LOADED OK")
 
-        # 🔥ウォームアップ（遅延＆Gateway Timeout対策）
+        # ウォームアップ（安定化）
         dummy = np.zeros((1, 150, 150, 3), dtype=np.float32)
         model.predict(dummy, verbose=0)
         print("WARMUP DONE")
@@ -91,15 +86,12 @@ def predict():
         data = np.array(img, dtype=np.float32) / 255.0
         data = np.expand_dims(data, axis=0)
 
-        # 🔥軽量＆安定推論
-        pred = model.predict(data, verbose=0, batch_size=1)
-
+        pred = model.predict(data, verbose=0)
         idx = int(np.argmax(pred))
-        confidence = float(np.max(pred))
 
         return jsonify({
             "result": categories[idx],
-            "confidence": confidence
+            "confidence": float(np.max(pred))
         })
 
     except Exception as e:
@@ -110,7 +102,7 @@ def predict():
 
 
 # =========================
-# 起動
+# 起動（Render対応）
 # =========================
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))

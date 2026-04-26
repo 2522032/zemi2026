@@ -48,6 +48,10 @@ def home():
 @app.route("/predict", methods=["POST"])
 def predict():
 
+    print("=== REQUEST DEBUG ===")
+    print("FILES:", request.files)
+
+
     if model is None:
         return jsonify({"error": "MODEL_NOT_LOADED"}), 500
 

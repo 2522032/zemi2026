@@ -10,21 +10,21 @@ categories = [
 
 def build_model():
     model = models.Sequential([
-        layers.Conv2D(32, (3,3), activation="relu", input_shape=(150,150,3)),
+        layers.Conv2D(32,(3,3),activation="relu",input_shape=(150,150,3)),
         layers.MaxPooling2D(2,2),
 
-        layers.Conv2D(64, (3,3), activation="relu"),
+        layers.Conv2D(64,(3,3),activation="relu"),
         layers.MaxPooling2D(2,2),
 
-        layers.Conv2D(128, (3,3), activation="relu"),
+        layers.Conv2D(128,(3,3),activation="relu"),
         layers.MaxPooling2D(2,2),
 
-        layers.Conv2D(128, (3,3), activation="relu"),
+        layers.Conv2D(128,(3,3),activation="relu"),
         layers.MaxPooling2D(2,2),
 
         layers.Flatten(),
-        layers.Dense(512, activation="relu"),
-        layers.Dense(len(categories), activation="softmax")
+        layers.Dense(512,activation="relu"),
+        layers.Dense(len(categories),activation="softmax")
     ])
 
     model.compile(
@@ -36,8 +36,9 @@ def build_model():
     return model
 
 
-# 保存用（学習後に使う）
 if __name__ == "__main__":
     model = build_model()
+
+    # ⭐重要：h5で統一（Render安定）
     model.save("model/mahjong_model.h5")
-    print("MODEL SAVED")
+    print("saved")

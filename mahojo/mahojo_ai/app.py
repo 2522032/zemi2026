@@ -28,9 +28,10 @@ def load_model_safe():
         print("EXISTS:", os.path.exists(MODEL_PATH))
 
         if not os.path.exists(MODEL_PATH):
-            raise FileNotFoundError("model file not found")
+            raise FileNotFoundError("model not found")
 
         model = tf.keras.models.load_model(MODEL_PATH, compile=False)
+
         print("MODEL LOADED OK")
 
     except Exception as e:
@@ -51,9 +52,7 @@ def home():
 def predict():
 
     if model is None:
-        return jsonify({
-            "error": "MODEL_NOT_LOADED"
-        }), 500
+        return jsonify({"error": "MODEL_NOT_LOADED"}), 500
 
     if "image" not in request.files:
         return jsonify({"error": "NO_IMAGE"}), 400

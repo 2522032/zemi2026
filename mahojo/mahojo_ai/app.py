@@ -10,7 +10,10 @@ app = Flask(__name__)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH = os.path.join(BASE_DIR, "model", "mahjong_model.keras")
 
-model = None
+model = tf.keras.models.load_model(
+    "model/mahjong_model.keras",
+    compile=False
+)
 
 categories = [
     "1m","2m","3m","4m","5m","6m","7m","8m","9m",

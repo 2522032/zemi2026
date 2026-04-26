@@ -8,7 +8,7 @@ import tensorflow as tf
 app = Flask(__name__)
 
 # =========================
-# パス設定（.h5統一）
+# パス
 # =========================
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH = os.path.join(BASE_DIR, "model", "mahjong_model.h5")
@@ -26,28 +26,31 @@ categories = [
 
 model = None
 
+
 # =========================
 # モデルロード
 # =========================
-def load_model():
+def load_model_safe():
     global model
 
     try:
-        print("=== MODEL DEBUG ===")
-        print("BASE_DIR:", BASE_DIR)
-        print("MODEL_PATH:", MODEL_PATH)
+        print("=== MODEL LOAD DEBUG ===")
+        print("MODEL PATH:", MODEL_PATH)
         print("EXISTS:", os.path.exists(MODEL_PATH))
 
         if not os.path.exists(MODEL_PATH):
-            raise FileNotFoundError("MODEL FILE NOT FOUND")
+            raise FileNotFoundError("MODEL NOT FOUND")
 
-        model = tf.keras.models.load_model(MODEL_PATH, compile=False)
-        print("MODEL LOADED OK")
+        model = tf.keras.models.load_model(
+            MODEL_PATH,
+            compile=False
+        )
 
-        # ウォームアップ（安定化）
-        dummy = np.zeros((1, 150, 150, 3), dtype=np.float32)
+        # 🔥ウォームアップ（Render安定化）
+        dummy = np.zeros((1,150,150,3), dtype=np.float32)
         model.predict(dummy, verbose=0)
-        print("WARMUP DONE")
+
+        print("MODEL LOADED OK")
 
     except Exception as e:
         print("MODEL LOAD FAILED:", e)
@@ -55,7 +58,8 @@ def load_model():
         model = None
 
 
-load_model()
+load_model_safe()
+
 
 # =========================
 # ヘルスチェック
@@ -66,6 +70,7 @@ def home():
         "status": "OK",
         "model_loaded": model is not None
     })
+
 
 # =========================
 # 推論API
@@ -82,16 +87,18 @@ def predict():
     try:
         file = request.files["image"]
 
-        img = Image.open(file).convert("RGB").resize((150, 150))
+        img = Image.open(file).convert("RGB").resize((150,150))
         data = np.array(img, dtype=np.float32) / 255.0
         data = np.expand_dims(data, axis=0)
 
         pred = model.predict(data, verbose=0)
+
         idx = int(np.argmax(pred))
+        confidence = float(np.max(pred))
 
         return jsonify({
             "result": categories[idx],
-            "confidence": float(np.max(pred))
+            "confidence": confidence
         })
 
     except Exception as e:
@@ -102,7 +109,7 @@ def predict():
 
 
 # =========================
-# 起動（Render対応）
+# 起動（Render必須）
 # =========================
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))

@@ -7,30 +7,40 @@ import traceback
 
 app = Flask(__name__)
 
-MODEL_PATH = "model/mahjong_model.h5"
+# ===== パスは絶対化（重要）=====
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODEL_PATH = os.path.join(BASE_DIR, "model", "mahjong_model.h5")
+
 model = None
 
-# ===== モデル安全ロード =====
+# ===== デバッグ表示付きモデルロード =====
 def load_model_safe():
     global model
+
     try:
-        print("WORKING DIR:", os.getcwd())
-        print("FILES:", os.listdir("."))
-        print("MODEL PATH CHECK:", os.path.exists(MODEL_PATH))
+        print("\n===== MODEL LOAD DEBUG =====")
+        print("BASE_DIR:", BASE_DIR)
+        print("MODEL_PATH:", MODEL_PATH)
+        print("MODEL EXISTS:", os.path.exists(MODEL_PATH))
+        print("FILES IN BASE:", os.listdir(BASE_DIR))
 
         model = tf.keras.models.load_model(
             MODEL_PATH,
             compile=False
         )
-        print("MODEL LOADED SUCCESS")
+
+        print("MODEL LOADED SUCCESS\n")
+
     except Exception as e:
-        print("MODEL LOAD ERROR:", e)
+        print("\nMODEL LOAD ERROR")
+        print(e)
         traceback.print_exc()
         model = None
 
+
 load_model_safe()
 
-# ===== ラベル =====
+# ===== 麻雀ラベル =====
 categories = [
     "1m","2m","3m","4m","5m","6m","7m","8m","9m",
     "1p","2p","3p","4p","5p","6p","7p","8p","9p",
@@ -47,23 +57,31 @@ def home():
         "model_loaded": model is not None
     })
 
-# ===== 予測 =====
+# ===== 予測API =====
 @app.route("/predict", methods=["POST"])
 def predict():
 
+    # モデル未ロード
     if model is None:
-        return jsonify({"error": "MODEL_NOT_LOADED"}), 500
+        return jsonify({
+            "error": "MODEL_NOT_LOADED"
+        }), 500
 
+    # 画像なし
     if "image" not in request.files:
-        return jsonify({"error": "NO_IMAGE"}), 400
+        return jsonify({
+            "error": "NO_IMAGE"
+        }), 400
 
     try:
         file = request.files["image"]
 
+        # 前処理
         img = Image.open(file).convert("RGB").resize((150, 150))
         data = np.array(img, dtype=np.float32) / 255.0
         data = np.expand_dims(data, axis=0)
 
+        # 推論
         pred = model.predict(data, verbose=0)
         idx = int(np.argmax(pred))
 
@@ -73,13 +91,16 @@ def predict():
         })
 
     except Exception as e:
+        print("INFERENCE ERROR:", e)
+        traceback.print_exc()
+
         return jsonify({
             "error": "INFERENCE_ERROR",
             "detail": str(e)
         }), 500
 
 
+# ===== Render対応起動 =====
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
-

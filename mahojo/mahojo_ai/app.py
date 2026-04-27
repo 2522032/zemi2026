@@ -7,15 +7,9 @@ import tensorflow as tf
 
 app = Flask(__name__)
 
-# =========================
-# パス
-# =========================
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-MODEL_PATH = os.path.join(BASE_DIR, "model", "mahjong_model.h5")
+MODEL_PATH = "model/mahjong_model.keras"
+model = None
 
-# =========================
-# ラベル
-# =========================
 categories = [
     "1m","2m","3m","4m","5m","6m","7m","8m","9m",
     "1p","2p","3p","4p","5p","6p","7p","8p","9p",
@@ -24,29 +18,14 @@ categories = [
     "white","green","red"
 ]
 
-model = None
-
-
-# =========================
-# モデルロード
-# =========================
 def load_model_safe():
     global model
-
     try:
         print("=== MODEL LOAD DEBUG ===")
-        print("MODEL PATH:", MODEL_PATH)
         print("EXISTS:", os.path.exists(MODEL_PATH))
 
-        if not os.path.exists(MODEL_PATH):
-            raise FileNotFoundError("MODEL NOT FOUND")
+        model = tf.keras.models.load_model(MODEL_PATH, compile=False)
 
-        model = tf.keras.models.load_model(
-            MODEL_PATH,
-            compile=False
-        )
-
-        # 🔥ウォームアップ（Render安定化）
         dummy = np.zeros((1,150,150,3), dtype=np.float32)
         model.predict(dummy, verbose=0)
 
@@ -57,13 +36,8 @@ def load_model_safe():
         traceback.print_exc()
         model = None
 
-
 load_model_safe()
 
-
-# =========================
-# ヘルスチェック
-# =========================
 @app.route("/")
 def home():
     return jsonify({
@@ -71,10 +45,6 @@ def home():
         "model_loaded": model is not None
     })
 
-
-# =========================
-# 推論API
-# =========================
 @app.route("/predict", methods=["POST"])
 def predict():
 
@@ -87,7 +57,7 @@ def predict():
     try:
         file = request.files["image"]
 
-        img = Image.open(file).convert("RGB").resize((150,150))
+        img = Image.open(file.stream).convert("RGB").resize((150,150))
         data = np.array(img, dtype=np.float32) / 255.0
         data = np.expand_dims(data, axis=0)
 
@@ -107,10 +77,6 @@ def predict():
             "detail": str(e)
         }), 500
 
-
-# =========================
-# 起動（Render必須）
-# =========================
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)

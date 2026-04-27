@@ -1,13 +1,5 @@
 from keras import layers, models
 
-categories = [
-    "1m","2m","3m","4m","5m","6m","7m","8m","9m",
-    "1p","2p","3p","4p","5p","6p","7p","8p","9p",
-    "1s","2s","3s","4s","5s","6s","7s","8s","9s",
-    "east","south","west","north",
-    "white","green","red"
-]
-
 def build_model():
     model = models.Sequential([
         layers.Conv2D(32, (3,3), activation="relu", input_shape=(150,150,3)),
@@ -24,22 +16,11 @@ def build_model():
 
         layers.Flatten(),
         layers.Dense(512, activation="relu"),
-        layers.Dense(len(categories), activation="softmax")
+        layers.Dense(34, activation="softmax")
     ])
 
-    model.compile(
-        optimizer="adam",
-        loss="categorical_crossentropy",
-        metrics=["accuracy"]
-    )
-
+    model.compile(optimizer="adam", loss="categorical_crossentropy", metrics=["accuracy"])
     return model
 
-
-if __name__ == "__main__":
-    model = build_model()
-
-    # 🔥必ず .h5
-    model.save("model/mahjong_model.h5")
-
-    print("MODEL SAVED (.h5)")
+model = build_model()
+model.save("model/mahjong_model.keras")

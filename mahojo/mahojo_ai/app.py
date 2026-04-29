@@ -22,6 +22,7 @@ def load_model_safe():
     global model
     try:
         print("=== MODEL LOAD DEBUG ===")
+        print("FILES IN MODEL DIR:", os.listdir("model"))
         print("EXISTS:", os.path.exists(MODEL_PATH))
 
         model = tf.keras.models.load_model(MODEL_PATH, compile=False)
@@ -80,4 +81,3 @@ def predict():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
-    
